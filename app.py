@@ -1,123 +1,88 @@
-import validators
 import streamlit as st
-import traceback
-from pytube import YouTube
+from langchain_groq import ChatGroq
+from langchain.chains import LLMMathChain, LLMChain
+from langchain.prompts import PromptTemplate
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain.agents.agent_types import AgentType
+from langchain.agents import Tool, initialize_agent
+from langchain.callbacks import StreamlitCallbackHandler
 
-# 🧠 Updated LangChain imports
-from langchain_core.prompts import PromptTemplate
-from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain_core.documents import Document
-from langchain.chains.combine_documents import load_summarize_chain  # ✅ FIXED import
+st.set_page_config(page_title="Text To MAth Problem Solver And Data Serach Assistant",page_icon="🧮")
+st.title("Text To Math Problem Solver Uing Google Gemma 2")
 
-# ---------------- Streamlit Config ----------------
-st.set_page_config(page_title="LangChain: Summarize Text From YT or Website", page_icon="🦜")
-st.title("🦜 LangChain: Summarize Text From YT or Website")
-st.subheader("Summarize URL")
+groq_api_key=st.sidebar.text_input(label="Groq API Key",type="password")
 
-# ---------------- Sidebar API Key ----------------
-with st.sidebar:
-    hf_api_key = st.text_input("Huggingface API Token", value="", type="password")
+if not groq_api_key:
+                   st.info("Please add your Groq APPI key to continue")
+                   st.stop()
+llm=ChatGroq(model="Gemma2-9b-It",groq_api_key=groq_api_key)
 
-# ---------------- URL Input ----------------
-generic_url = st.text_input("URL", label_visibility="collapsed")
+#Initializing the tools
+wikipedia_wrapper=WikipediaAPIWrapper()
+wikipedia_tool=Tool(
+    name="Wikipedia",
+    func=wikipedia_wrapper.run,
+    description="A tool for searching the Internet to find the vatious information on the topics mentioned"
 
-# ---------------- HuggingFace Model ----------------
-repo_id = "mistralai/Mistral-7B-Instruct-v0.3"
-llm = HuggingFaceEndpoint(
-    repo_id=repo_id,
-    max_length=500,
-    temperature=0.7,
-    token=hf_api_key
 )
+#Initializa the MAth tool
+math_chain=LLMMathChain.from_llm(llm=llm)
+calculator=Tool(
+        name="Calculator",
+        func=math_chain.run,
+        description="A tools for answering math related questions. Only input mathematical expression need to bed provided"
+    
+)
+prompt="""
+Your a agent tasked for solving users mathemtical question. Logically arrive at the solution and provide a detailed explanation
+and display it point wise for the question below
+Question:{question}
+Answer:
+"""
+prompt_template=PromptTemplate(
+        input_variables=["question"],
+        template=prompt
+)
+chain=LLMChain(llm=llm,prompt=prompt_template)
+reasoning_tool=Tool(
+        name="Reasoning tool",
+        func=chain.run,
+        description="A tool for answering logic-based and reasoning questions."
+    
+)
+tools=[wikipedia_tool,calculator,reasoning_tool]
+agent=initialize_agent(tools,llm,agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,verbose=True,callback_manager=None)
 
-# ---------------- Summarization Prompts ----------------
-map_prompt_template = "Summarize the following text:\n{text}"
-combine_prompt_template = "Given the following summaries, combine them into a comprehensive summary of 300 words:\n{text}"
-
-map_prompt = PromptTemplate(template=map_prompt_template, input_variables=["text"])
-combine_prompt = PromptTemplate(template=combine_prompt_template, input_variables=["text"])
-
-# ---------------- Helper Functions ----------------
-def extract_youtube_id(url):
-    from urllib.parse import urlparse, parse_qs
-    parsed = urlparse(url)
-    if parsed.hostname in ["www.youtube.com", "youtube.com"]:
-        return parse_qs(parsed.query).get("v", [None])[0]
-    elif parsed.hostname in ["youtu.be"]:
-        return parsed.path[1:]
-    return None
+if "messages" not in st.session_state:
+    st.session_state.messages=[
+        {"role":"system","content":"You are a helpful assistant that helps people find information."}
+    ]
+for msg in st.session_state.messages:
+        st.chat_message(msg["role"]).write(msg["content"])
 
 
-def fetch_youtube_captions(video_url):
-    try:
-        yt = YouTube(video_url)
-        caption = yt.captions.get_by_language_code("en")  # English captions
-        if caption:
-            text = caption.generate_srt_captions()
-            return text
-        else:
-            return None
-    except Exception as e:
-        st.error("Failed to fetch YouTube captions.")
-        st.text(str(e))
-        st.text(traceback.format_exc())
-        return None
+## LEts start the interaction
+question=st.text_area("Enter youe question:","I have 5 bananas and 7 grapes. I eat 2 bananas and give away 3 grapes. Then I buy a dozen apples and 2 packs of blueberries. Each pack of blueberries contains 25 berries. How many total pieces of fruit do I have at the end?")
 
+if st.button("find my answer"):
+    if question:
+        with st.spinner("Generate response.."):
+            st.session_state.messages.append({"role":"user","content":question})
+            st.chat_message("user").write(question)
 
-# ---------------- Summarization Button ----------------
-if st.button("Summarize the Content from YT or Website"):
-    if not hf_api_key.strip() or not generic_url.strip():
-        st.error("Please provide the API key and a URL to get started.")
-    elif not validators.url(generic_url):
-        st.error("Please enter a valid URL. It can be a YouTube video URL or website URL.")
+            st_cb=StreamlitCallbackHandler(st.container(),expand_new_thoughts=False)
+            response=assistant_agent.run(st.session_state.messages,callbacks=[st_cb]
+                                         )
+            st.session_state.messages.append({'role':'assistant',"content":response})
+            st.write('### Response:')
+            st.success(response)
+
     else:
-        try:
-            docs = []
-            with st.spinner("Loading content..."):
+        st.warning("Please enter the question")
 
-                # --- YouTube ---
-                if "youtube.com" in generic_url or "youtu.be" in generic_url:
-                    text = fetch_youtube_captions(generic_url)
-                    if not text:
-                        st.error("No captions available for this video.")
-                        st.stop()
-                    docs.append(Document(page_content=text))
 
-                # --- Website ---
-                else:
-                    loader = UnstructuredURLLoader(
-                        urls=[generic_url],
-                        ssl_verify=False,
-                        headers={"User-Agent": "Mozilla/5.0"}
-                    )
-                    docs = loader.load()
 
-                if not docs:
-                    st.error("No content could be extracted from the URL.")
-                    st.stop()
 
-                # --- Summarization Chain ---
-                chain = load_summarize_chain(
-                    llm,
-                    chain_type="map_reduce",
-                    map_prompt=map_prompt,
-                    combine_prompt=combine_prompt
-                )
-                output_summary = chain.run(docs)
 
-                st.success("✅ Summary Generated!")
-                st.write(output_summary)
 
-                # --- Download Summary Button ---
-                st.download_button(
-                    label="Download Summary",
-                    data=output_summary,
-                    file_name="summary.txt",
-                    mime="text/plain"
-                )
 
-        except Exception as e:
-            st.error("An error occurred during summarization.")
-            st.text(str(e))
-            st.text(traceback.format_exc())
