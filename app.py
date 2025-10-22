@@ -25,6 +25,8 @@ if st.button("Send"):
     elif not user_input:
         st.error("Please type a question.")
     else:
-        # Get response directly
-        response = llm(user_input)
+        # ✅ Proper call to HuggingFaceEndpoint
+        llm_result = llm.generate([user_input])   # pass as list
+        response = llm_result.generations[0][0].text
+
         st.markdown(f"**Bot:** {response}")
