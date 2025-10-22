@@ -1,28 +1,33 @@
-# --- Web App ---
-streamlit==1.39.0
+langchain
+streamlit
+python-dotenv
+ipykernel
+langchain-community
+pypdf
+bs4
+arxiv
+pymupdf
+wikipedia
+langchain-text-splitters
+langchain-openai
+chromadb
+sentence_transformers
+langchain_huggingface
+faiss-cpu
+langchain_chroma
+duckdb
+pandas
+openai
+langchain-groq
+duckduckgo-search
+pymupdf
+arxiv
+wikipedia
+mysql-connector-python
+SQLAlchemy
 validators==0.28.1
-python-dotenv==1.0.1
-
-# --- LangChain Modular Ecosystem (0.3+ compatible) ---
-langchain==0.3.7
-langchain-core==0.3.15
-langchain-community==0.3.3
-langchain-huggingface==0.1.2
-langchain-text-splitters==0.3.2
-
-# --- Hugging Face API ---
-huggingface_hub==0.25.2
-
-# --- Document & Web Loading ---
-unstructured==0.15.12
-beautifulsoup4==4.12.3
-pymupdf==1.24.10
-pypdf==5.0.0
-
-# --- YouTube Support ---
-pytube==15.0.0
-youtube-transcript-api==0.6.2
-
-# --- General Utilities ---
-pandas==2.2.3
-numexpr==2.10.2
+youtube_transcript_api
+unstructured
+pytube
+numexpr
+huggingface_hub
