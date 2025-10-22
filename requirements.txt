@@ -2,7 +2,7 @@ langchain
 streamlit
 python-dotenv
 ipykernel
-langchain-community
+langchain_community
 pypdf
 bs4
 arxiv
@@ -31,3 +31,4 @@ unstructured
 pytube
 numexpr
 huggingface_hub
+
