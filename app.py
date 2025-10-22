@@ -5,10 +5,10 @@ from pytube import YouTube
 
 # 🧠 Updated LangChain imports
 from langchain_core.prompts import PromptTemplate
-from langchain_community.chains.summarize import load_summarize_chain
+from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_core.documents import Document
-from langchain_community.document_loaders import UnstructuredURLLoader
+from langchain.chains.combine_documents import load_summarize_chain  # ✅ FIXED import
 
 # ---------------- Streamlit Config ----------------
 st.set_page_config(page_title="LangChain: Summarize Text From YT or Website", page_icon="🦜")
