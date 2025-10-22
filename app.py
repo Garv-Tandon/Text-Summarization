@@ -1,25 +1,34 @@
 import streamlit as st
-from transformers import pipeline
+from groq import Groq
 
-# ---------------- Streamlit Setup ----------------
-st.set_page_config(page_title="Offline Chatbot", page_icon="🤖")
-st.title("🤖 Offline Chatbot")
-st.write("This chatbot runs locally—no API key needed!")
+st.set_page_config(page_title="Groq Chatbot", page_icon="🤖")
+st.title("🤖 Simple Groq Chatbot")
 
-# ---------------- Load Local Model ----------------
-@st.cache_resource(show_spinner=True)
-def load_model():
-    return pipeline("text-generation", model="distilgpt2")
+# ---------------- Sidebar: API Key ----------------
+api_key = st.sidebar.text_input("Groq API Key", type="password")
 
-generator = load_model()
-
-# ---------------- Chat Input ----------------
-user_input = st.text_input("Type your message:")
+# ---------------- User Input ----------------
+user_input = st.text_input("Ask a question:")
 
 if st.button("Send"):
-    if not user_input:
-        st.error("Please type a message.")
+    if not api_key:
+        st.error("Please enter your Groq API key.")
+    elif not user_input:
+        st.error("Please type a question.")
     else:
-        # Generate response
-        output = generator(user_input, max_length=100, do_sample=True, top_k=50)
-        st.markdown(f"**Bot:** {output[0]['generated_text']}")
+        try:
+            client = Groq(api_key=api_key)
+
+            # Send message to Groq model
+            messages = [{"role": "user", "content": user_input}]
+            response = client.chat.completions.create(
+                messages=messages,
+                model="openai/gpt-oss-20b"
+            )
+
+            # Display bot response
+            st.markdown(f"**Bot:** {response.choices[0].message.content}")
+
+        except Exception as e:
+            st.error("❌ Error occurred")
+            st.text(str(e))
