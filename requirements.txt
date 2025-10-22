@@ -1,4 +1,4 @@
-langchain
+langchain_core
 streamlit
 python-dotenv
 ipykernel
@@ -31,3 +31,4 @@ unstructured
 pytube
 numexpr
 huggingface_hub
+
