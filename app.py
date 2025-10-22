@@ -1,6 +1,6 @@
 import validators
 import streamlit as st
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain.docstore.document import Document
@@ -117,3 +117,4 @@ if st.button("Summarize the Content from YT or Website"):
             st.error("An error occurred during summarization.")
             st.text(str(e))
             st.text(traceback.format_exc())
+
