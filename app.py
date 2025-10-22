@@ -1,12 +1,14 @@
 import validators
 import streamlit as st
-from langchain_core.prompts import PromptTemplate
-from langchain.chains.summarize import load_summarize_chain
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain.docstore.document import Document
-from pytube import YouTube
-from langchain_community.document_loaders import UnstructuredURLLoader
 import traceback
+from pytube import YouTube
+
+# 🧠 Updated LangChain imports
+from langchain_core.prompts import PromptTemplate
+from langchain_community.chains.summarize import load_summarize_chain
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain_core.documents import Document
+from langchain_community.document_loaders import UnstructuredURLLoader
 
 # ---------------- Streamlit Config ----------------
 st.set_page_config(page_title="LangChain: Summarize Text From YT or Website", page_icon="🦜")
@@ -46,6 +48,7 @@ def extract_youtube_id(url):
         return parsed.path[1:]
     return None
 
+
 def fetch_youtube_captions(video_url):
     try:
         yt = YouTube(video_url)
@@ -60,6 +63,7 @@ def fetch_youtube_captions(video_url):
         st.text(str(e))
         st.text(traceback.format_exc())
         return None
+
 
 # ---------------- Summarization Button ----------------
 if st.button("Summarize the Content from YT or Website"):
@@ -117,4 +121,3 @@ if st.button("Summarize the Content from YT or Website"):
             st.error("An error occurred during summarization.")
             st.text(str(e))
             st.text(traceback.format_exc())
-
