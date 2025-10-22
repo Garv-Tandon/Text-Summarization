@@ -1,30 +1,25 @@
 import streamlit as st
-from huggingface_hub import InferenceClient
+from transformers import pipeline
 
-st.set_page_config(page_title="Simple Chatbot", page_icon="🤖")
-st.title("🤖 Simple Hugging Face Chatbot")
+# ---------------- Streamlit Setup ----------------
+st.set_page_config(page_title="Offline Chatbot", page_icon="🤖")
+st.title("🤖 Offline Chatbot")
+st.write("This chatbot runs locally—no API key needed!")
 
-# Hugging Face API Key
-hf_api_key = st.sidebar.text_input("🔑 Hugging Face API Token", type="password")
+# ---------------- Load Local Model ----------------
+@st.cache_resource(show_spinner=True)
+def load_model():
+    return pipeline("text-generation", model="distilgpt2")
 
-# User input
-user_input = st.text_input("Type your question here:")
+generator = load_model()
+
+# ---------------- Chat Input ----------------
+user_input = st.text_input("Type your message:")
 
 if st.button("Send"):
-    if not hf_api_key:
-        st.error("Please enter your Hugging Face API token.")
-    elif not user_input:
-        st.error("Please type a question.")
+    if not user_input:
+        st.error("Please type a message.")
     else:
-        try:
-            client = InferenceClient(token=hf_api_key)
-            # Use Mistral 7B Instruct model
-            response = client.text_generation(
-                model="mistralai/Mistral-7B-Instruct-v0.3",
-                inputs=user_input,
-                parameters={"max_new_tokens": 500, "temperature": 0.7}
-            )
-            st.markdown(f"**Bot:** {response[0]['generated_text']}")
-        except Exception as e:
-            st.error("❌ Error occurred")
-            st.text(str(e))
+        # Generate response
+        output = generator(user_input, max_length=100, do_sample=True, top_k=50)
+        st.markdown(f"**Bot:** {output[0]['generated_text']}")
