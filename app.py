@@ -5,11 +5,12 @@ from langchain_huggingface import HuggingFaceEndpoint
 # ---------------- Streamlit Setup ----------------
 st.set_page_config(page_title="Simple Chatbot", page_icon="🤖")
 st.title("🤖 Simple Chatbot with LangChain")
+st.write("Ask any question and get answers from a Hugging Face model.")
 
 # ---------------- Sidebar: Hugging Face API ----------------
 hf_api_key = st.sidebar.text_input("🔑 Hugging Face API Token", type="password")
 
-# ---------------- HuggingFace LLM ----------------
+# ---------------- HuggingFace Model ----------------
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mistral-7B-Instruct-v0.3",
     token=hf_api_key,
@@ -31,6 +32,10 @@ if st.button("Send"):
     elif not user_input:
         st.error("Please type a question.")
     else:
+        # Format the prompt
         prompt_text = chat_prompt.format(question=user_input)
-        response = llm(prompt_text)
+        # Correct way to call HuggingFaceEndpoint
+        llm_response = llm.generate([prompt_text])
+        response = llm_response.generations[0][0].text
+
         st.markdown(f"**Bot:** {response}")
